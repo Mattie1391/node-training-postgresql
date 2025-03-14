@@ -5,8 +5,11 @@ const { dataSource } = require('../db/data-source')
 const logger = require('../utils/logger')('Admin')
 
 const { isValidString, isNumber } = require('../utils/validUtils')
+const isAuth = require('../middlewares/isAuth')
+const isCoach = require('../middlewares/isCoach')
 
-router.post('/coaches/courses', async (req, res, next) => {
+
+router.post('/coaches/courses', isAuth, isCoach, async (req, res, next) => {
     try {
       // TODO可以做檢查日期格式
       // 可以用 moment
@@ -67,7 +70,7 @@ router.post('/coaches/courses', async (req, res, next) => {
     }
   })
 
-router.put('/coaches/courses/:courseId', async (req, res, next) => {
+router.put('/coaches/courses/:courseId', isAuth, isCoach, async (req, res, next) => {
     try {
       const { courseId } = req.params
       // TODO 可以做檢查日期格式    
