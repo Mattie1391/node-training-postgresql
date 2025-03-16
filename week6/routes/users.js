@@ -6,6 +6,7 @@ const { dataSource } = require('../db/data-source')
 const logger = require('../utils/logger')('User')
 const appError = require('../utils/appError')
 const { generateJWT } = require('../utils/jwtUtils')
+const isAuth = require('../middlewares/isAuth')
 
 const { isValidString, isValidPassword } = require('../utils/validUtils')
 
@@ -108,7 +109,7 @@ router.post('/login', async (req, res, next) => {
       return
     }
 
-    
+
     // JWT
     const token = generateJWT({
       id: findUser.id,
@@ -127,6 +128,33 @@ router.post('/login', async (req, res, next) => {
     })
   } catch (error) {
     logger.error('登入錯誤:', error)
+    next(error)
+  }
+})
+
+router.get('/profile', isAuth, async (req, res, next) => {
+  try {
+    const {id} = req.user
+    if(!isValidString(id)) {
+      next(appError(400, "欄位未填寫正確")) 
+      return
+    }
+    const findUser = await dataSource.getRepository('User').findOne({
+      where: {
+        id
+      }
+    })
+    res.status(200).json({
+      status: 'success',
+      data: {
+        user: {
+          email: findUser.email,
+          name: findUser.name
+        }
+      }
+    })
+  } catch (error) {
+    logger.error('取得使用者資料錯誤:', error)
     next(error)
   }
 })
