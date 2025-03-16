@@ -159,4 +159,45 @@ router.get('/profile', isAuth, async (req, res, next) => {
   }
 })
 
+router.put('/profile', isAuth, async (req, res, next) => {
+  try {
+    const {id} = req.user
+    const { name } = req.body
+    if(!isValidString(name)) {
+      next(appError(400, "欄位未填寫正確")) 
+      return
+    }
+    const userRepo = dataSource.getRepository('User')
+    const findUser = await userRepo.findOne({
+      where: {
+        id
+      }
+    })
+    if(findUser.name === name) {
+      next(appError(400, "使用者名稱未變更")) 
+      return
+    }
+    const updateUser = await userRepo.update({
+      id
+    },{
+      name
+    })
+    if(updateUser.affected === 0) {
+      next(appError(400, "更新使用者失敗")) 
+      return
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        user: {
+          name: findUser.name
+        }
+      }
+    })
+  } catch (error) {
+    logger.error('更新使用者資料錯誤:', error)
+    next(error)
+  }
+})
 module.exports = router
