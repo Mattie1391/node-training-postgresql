@@ -40,4 +40,74 @@ router.get('/', async (req, res, next) => {
         next(error)
     }
 })
+
+router.get('/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params
+    if(!isValidString(id)) {
+      next(appError(400, "欄位未填寫正確"))
+      return
+    }
+    const userRepo = dataSource.getRepository('User')
+    const findCoach = await userRepo.findOne({
+      select: ['id', 'name'],
+      where: {
+        id,
+        role: 'COACH'
+      }
+    })
+    if(!findCoach) {
+      next(appError(400, "找不到教練"))
+      return
+    }
+    const coachRepo = dataSource.getRepository('Coach')
+    const coach = await coachRepo.findOne({
+      where: {
+        user: {
+          id: findCoach.id
+        }
+      }
+    })
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        user: {
+          name: findCoach.name,
+          role: findCoach.role
+        },
+        coach:{
+            // {
+            //     "status" : "success",
+            //     "data": {
+            //         "user": {
+            //             "name": "test",
+            //             "role": "COACH"
+            //         },
+            //         "coach": {
+            //             "id": "1c8da31a-5fd2-44f3-897e-4a259e7ec62b",
+            //             "user_id": "51feb472-a9b8-4365-b9a5-79b9594315a6",
+            //             "experience_years" : 1,
+            //             "description" : "瑜伽教練",
+            //             "profile_image_url" : "https://...",
+            //             "created_at": "2025-01-01T00:00:000Z",
+            //             "updated_at": "2025-01-01T00:00:000Z"
+            //         }
+            //     }
+            // }
+          id: coach.id,
+          user_id: coach.user_id,
+          experience_years: coach.experience_years,
+          description: coach.description,
+          profile_image_url: coach.profile_image_url,
+          created_at: coach.created_at,
+          updated_at: coach.updated_at
+        }
+      }
+    })
+    } catch (error) {
+        next(error)
+    }
+})
+
 module.exports = router
